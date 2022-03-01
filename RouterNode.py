@@ -16,14 +16,13 @@ class RouterNode():
         self.myID = ID
         self.sim = sim
         self.myGUI = GuiTextArea.GuiTextArea("  Output window for Router #" + str(ID) + "  ")
-
         self.costs = deepcopy(costs)
 
 
     # --------------------------------------------------
     def recvUpdate(self, pkt):
-        pass
-
+        if not self.myID == pkt.sourceid:
+            self.costs[pkt.sourceid] = pkt.mincosts[self.myID]
 
     # --------------------------------------------------
     def sendUpdate(self, pkt):
@@ -32,8 +31,13 @@ class RouterNode():
 
     # --------------------------------------------------
     def printDistanceTable(self):
-        self.myGUI.println("Current table for " + str(self.myID) +
-                           "  at time " + str(self.sim.getClocktime()))
+        self.myGUI.println("Current table for " + str(self.myID) + "  at time " + str(self.sim.getClocktime()))
+        self.myGUI.println("")
+        self.myGUI.println("Distancetable:")
+        self.myGUI.println("      dst |    0   1   2")
+        self.myGUI.println("--------------------------")
+        self.myGUI.print(" nbr    " + str(self.myID) + " |    " + str(self.costs[0]) + "   " + 
+                                        str(self.costs[1]) + "   " + str(self.costs[2]) + "\n")
 
 
     # --------------------------------------------------
