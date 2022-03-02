@@ -8,6 +8,10 @@ class RouterNode():
     sim = None
     costs = None
 
+    # Node 0: 0 4 1
+    # mincosts[] = {0, 5, 1}
+    # Node 1: 4 0 50
+
     # Access simulator variables with:
     # self.sim.POISONREVERSE, self.sim.NUM_NODES, etc.
 
@@ -22,7 +26,8 @@ class RouterNode():
     # --------------------------------------------------
     def recvUpdate(self, pkt):
         if not self.myID == pkt.sourceid:
-            self.costs[pkt.sourceid] = pkt.mincosts[self.myID]
+            pass
+            # self.costs[pkt.sourceid] = pkt.mincosts[self.myID]
 
     # --------------------------------------------------
     def sendUpdate(self, pkt):
