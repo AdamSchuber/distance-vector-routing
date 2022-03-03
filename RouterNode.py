@@ -26,14 +26,14 @@ class RouterNode():
         self.distanceVector = [
             [0 for _ in range(self.sim.NUM_NODES)] for _ in range(self.sim.NUM_NODES)]
 
-        for i in self.sim.NUM_NODES:
-            for j in self.sim.NUM_NODES:
+        for i in range(self.sim.NUM_NODES):
+            for j in range(self.sim.NUM_NODES):
                 if not i == ID and j == ID:
                     self.distanceVector[i][j] = self.sim.INFINITY
                 else:
                     self.distanceVector[i][j] = 0
 
-        self.updateDistanceVector(self, costs, self.myID)
+        self.updateDistanceVector(costs, ID)
 
         for nodeID in range(0, self.sim.NUM_NODES):
             if self.is_adjacent(nodeID):
@@ -49,9 +49,9 @@ class RouterNode():
 
     def updateDistanceVector(self, mincosts, sourceid):
         # Dx(y) min{c(x,y) + Dy(y), c(x,z) + Dz(y)}f
-        for nodeID in self.sim.NUM_NODES:
+        for nodeID in range(self.sim.NUM_NODES):
             self.distanceVector[self.myID][nodeID] = min(
-                self.cost[nodeID] + self.costs[self.myID], mincosts(nodeID) + mincosts(self.myID))
+                self.costs[nodeID] + self.costs[self.myID], mincosts[nodeID] + mincosts[self.myID])
 
     # --------------------------------------------------
 
