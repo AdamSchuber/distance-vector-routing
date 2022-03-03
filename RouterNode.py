@@ -33,6 +33,7 @@ class RouterNode():
                 else:
                     self.distanceVector[i][j] = 0
 
+        #Gör om costs till matris
         self.updateDistanceVector(costs, ID)
 
         for nodeID in range(0, self.sim.NUM_NODES):
@@ -57,8 +58,9 @@ class RouterNode():
 
     def recvUpdate(self, pkt):
         if not self.myID == pkt.sourceid:
-            self.costs[pkt.sourceid] = pkt.mincosts[self.myID]
-            self.updateDistanceVector(self, pkt.mincosts, pkt.sourceid)
+            pass
+            #self.costs[pkt.sourceid] = pkt.mincost[self.myID]
+            self.updateDistanceVector(pkt.mincost, pkt.sourceid)
 
     # --------------------------------------------------
     def sendUpdate(self, pkt):
@@ -80,5 +82,5 @@ class RouterNode():
 
     def updateLinkCost(self, dest, newcost):
         self.costs[dest] = newcost
-        self.updateDistanceVector(self, self.costs, dest)
-        self.sendUpdate()
+        self.updateDistanceVector(self.costs, dest)
+        #self.sendUpdate()
