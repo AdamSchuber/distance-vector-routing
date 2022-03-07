@@ -72,7 +72,7 @@ class RouterNode():
 
     # --------------------------------------------------
     def sendUpdate(self):
-        for nodeID in range(0, self.sim.sim.NUM_NODES):
+        for nodeID in range(0, self.sim.NUM_NODES):
             if self.isAdjacent(nodeID):
                 pkt = RouterPacket.RouterPacket(
                     self.myID, nodeID, self.distanceVector[self.myID])
