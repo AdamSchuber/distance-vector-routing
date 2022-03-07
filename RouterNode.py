@@ -47,19 +47,7 @@ class RouterNode():
         self.distanceVector[self.myID] = self.costs
 
         # Sends update packet if nodes are adjecent
-
-        # for nodeID in range(0, self.sim.NUM_NODES):
-        #     if self.isAdjacent(nodeID):
-        #         pkt = RouterPacket.RouterPacket(
-        #             self.myID, nodeID, self.distanceVector)
-        #         self.sendUpdate(pkt)
-
-        # Tänker att vi borde skicka array istället för matrix
-        for nodeID in range(0, self.sim.NUM_NODES):
-            if self.isAdjacent(nodeID):
-                pkt = RouterPacket.RouterPacket(
-                    self.myID, nodeID, self.distanceVector[self.myID])
-                self.sendUpdate(pkt)
+        self.sendUpdate()
 
     # --------------------------------------------------
     def isAdjacent(self, nodeID):
@@ -83,7 +71,11 @@ class RouterNode():
             self.updateDistanceVector(pkt.mincost)
 
     # --------------------------------------------------
-    def sendUpdate(self, pkt):
+    def sendUpdate(self):
+        for nodeID in range(0, self.sim.sim.NUM_NODES):
+            if self.isAdjacent(nodeID):
+                pkt = RouterPacket.RouterPacket(
+                    self.myID, nodeID, self.distanceVector[self.myID])
         self.sim.toLayer2(pkt)
 
     # --------------------------------------------------
@@ -107,8 +99,8 @@ class RouterNode():
     def updateLinkCost(self, destID, newcost):
         # Update costs for self and distanceVector
         self.costs[destID] = newcost
-        
-        # Cleara distanceVector? kanske restarda den liksom?
-
+        self.updateDistanceVector(self.costs)
         # Send update to all adjencent nodes
+        
+
         pass
