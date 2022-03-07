@@ -4,6 +4,11 @@ import RouterPacket
 import F
 from copy import deepcopy
 
+# formula bellman-ford:
+#
+# Dx(y) min{c(x,y) + Dy(y), c(x,z) + Dz(y)}
+#
+
 
 class RouterNode():
     myID = None
@@ -55,26 +60,27 @@ class RouterNode():
 
     # --------------------------------------------------
 
-    def updateDistanceVector(self, mincost):
-        # Dx(y) min{c(x,y) + Dy(y), c(x,z) + Dz(y)}
+    def updateDistanceVector(self, minCost, sourceID):
+        # Updates distances for pkt source in vector
+        self.distanceVector[sourceID] = minCost
+        
+        # Sets self distances as fastest according to bellman-ford 
         for nodeID in range(self.sim.NUM_NODES):
-            # self.distanceVector[self.myID][nodeID] = min(
-            #     mincost[self.myID][nodeID] + mincost[self.myID][self.myID], mincost[sourceID][nodeID] + mincost[sourceID][self.myID])
             self.distanceVector[self.myID][nodeID] = min(
-                self.costs[nodeID] + self.costs[self.myID], mincost[nodeID] + mincost[self.myID])
+                self.costs[nodeID] + self.costs[self.myID], minCost[nodeID] + minCost[self.myID])
 
     # --------------------------------------------------
 
     def recvUpdate(self, pkt):
         if not self.myID == pkt.sourceid:
-            self.costs[pkt.sourceid] = pkt.mincost[self.myID]
-            self.updateDistanceVector(pkt.mincost)
+            self.costs[pkt.sourceid]=pkt.mincost[self.myID]
+            self.updateDistanceVector(pkt.mincost, pkt.sourceid)
 
     # --------------------------------------------------
     def sendUpdate(self):
-        for nodeID in range(0, self.sim.sim.NUM_NODES):
+        for nodeID in range(0, self.sim.NUM_NODES):
             if self.isAdjacent(nodeID):
-                pkt = RouterPacket.RouterPacket(
+                pkt=RouterPacket.RouterPacket(
                     self.myID, nodeID, self.distanceVector[self.myID])
         self.sim.toLayer2(pkt)
 
@@ -99,8 +105,7 @@ class RouterNode():
     def updateLinkCost(self, destID, newcost):
         # Update costs for self and distanceVector
         self.costs[destID] = newcost
-        self.updateDistanceVector(self.costs)
-        # Send update to all adjencent nodes
+        self.updateDistanceVector(self.costs, destID)
         
-
-        pass
+        # Send update to all adjencent nodes
+        self.sendUpdate()
