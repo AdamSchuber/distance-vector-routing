@@ -30,10 +30,18 @@ class RouterNode():
         # Initilizes distanceVector to infinity to all nodes except itself
         for i in range(self.sim.NUM_NODES):
             for j in range(self.sim.NUM_NODES):
-                if not i == ID and j == ID:
-                    self.distanceVector[i][j] = self.sim.INFINITY
-                else:
+                if i == ID and j == ID:
                     self.distanceVector[i][j] = 0
+                else:
+                    self.distanceVector[i][j] = self.sim.INFINITY
+
+        # Print distanceVector values
+        for i in range(0, sim.NUM_NODES):
+            self.myGUI.print("\n")
+            for j in range(0, sim.NUM_NODES):
+                self.myGUI.print(str
+                                 (self.distanceVector[i][j]) + "  ")
+        self.myGUI.print("\n")
 
         # Initilizes the self nodes costs to neighbors
         self.distanceVector[self.myID] = self.costs
@@ -59,7 +67,7 @@ class RouterNode():
 
     # --------------------------------------------------
 
-    def updateDistanceVector(self, mincost, sourceID):
+    def updateDistanceVector(self, mincost):
         # Dx(y) min{c(x,y) + Dy(y), c(x,z) + Dz(y)}
         for nodeID in range(self.sim.NUM_NODES):
             # self.distanceVector[self.myID][nodeID] = min(
@@ -72,7 +80,7 @@ class RouterNode():
     def recvUpdate(self, pkt):
         if not self.myID == pkt.sourceid:
             self.costs[pkt.sourceid] = pkt.mincost[self.myID]
-            self.updateDistanceVector(pkt.mincost, pkt.sourceid)
+            self.updateDistanceVector(pkt.mincost)
 
     # --------------------------------------------------
     def sendUpdate(self, pkt):
@@ -87,8 +95,7 @@ class RouterNode():
         self.myGUI.println("Distancetable:")
         self.myGUI.println("      dst |    0   1   2")
         self.myGUI.println("--------------------------")
-        # self.myGUI.print(" nbr    " + str(self.myID) + " |    " + str(self.costs[0]) + "   " +
-        #                  str(self.costs[1]) + "   " + str(self.costs[2]) + "\n")
+
         for nodeID in range(0, self.sim.NUM_NODES):
             self.myGUI.print(" nbr    " + str(nodeID) + " |    ")
             for i in range(0, self.sim.NUM_NODES):
@@ -98,9 +105,10 @@ class RouterNode():
     # --------------------------------------------------
 
     def updateLinkCost(self, destID, newcost):
-        # Update costs for self
-        # self.costs[destID] = newcost
-        # self.updateDistanceVector()
+        # Update costs for self and distanceVector
+        self.costs[destID] = newcost
+        
+        # Cleara distanceVector? kanske restarda den liksom?
 
         # Send update to all adjencent nodes
         pass
