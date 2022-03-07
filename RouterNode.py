@@ -9,9 +9,8 @@ class RouterNode():
     myID = None
     myGUI = None
     sim = None
-    costs = None            #Cost for the link between two nodes
-    distVector = None       #The shortest distance to every node
-    graph = None
+    costs = None
+    distanceVector = None
 
     # Access simulator variables with:
     # self.sim.POISONREVERSE, self.sim.NUM_NODES, etc.export DISPLAY=172.25.32.1:0.0
@@ -23,47 +22,60 @@ class RouterNode():
         self.myGUI = GuiTextArea.GuiTextArea(
             "  Output window for Router #" + str(ID) + "  ") 
         self.costs = deepcopy(costs)
-        self.distVector = deepcopy(costs)
-        
-        # Send distVector to adjacent nodes
-        for nodeID in range(0, len(self.costs)):
-            if self.is_adjacent(nodeID):
-                pkt = RouterPacket.RouterPacket(self.myID, nodeID, self.distVector)
-                self.sendUpdate(pkt)
+
+        # Initilizes distanceVector as Matrix with the nodes as columns and rows
+        self.distanceVector = [
+            [0 for _ in range(self.sim.NUM_NODES)] for _ in range(self.sim.NUM_NODES)]
+
+        # Initilizes distanceVector to infinity to all nodes except itself
+        for i in range(self.sim.NUM_NODES):
+            for j in range(self.sim.NUM_NODES):
+                if i == ID and j == ID:
+                    self.distanceVector[i][j] = 0
+                else:
+                    self.distanceVector[i][j] = self.sim.INFINITY
+
+        # Print distanceVector values
+        for i in range(0, sim.NUM_NODES):
+            self.myGUI.print("\n")
+            for j in range(0, sim.NUM_NODES):
+                self.myGUI.print(str
+                                 (self.distanceVector[i][j]) + "  ")
+        self.myGUI.print("\n")
+
+        # Initilizes the self nodes costs to neighbors
+        self.distanceVector[self.myID] = self.costs
+
+        # Sends update packet if nodes are adjecent
+        self.sendUpdate()
+
     # --------------------------------------------------
-    def is_adjacent(self, nodeID):
+    def isAdjacent(self, nodeID):
         return nodeID != self.myID and self.costs[nodeID] != 999
 
     # --------------------------------------------------
-    def updateDistVector(self, costs, sourceID):
-        pass
-        # Dx(Y) min{c(x,y) + Dy(y), c(x,z) + Dz(y)}
 
-        # D1(0) min{cost(1,0) + D0(0), cost(1,2) + D2(1)}
-        # D1(0) min{4 + 0, 50 + 1}
-        # D1(0) = cost(1,0) = 4
-
-        # thirdWheel = 0
-        # if thirdWheel == self.myID or thirdWheel == pkt.sourceID:
-        #     thirdWheel += 1
-        # if thirdWheel == self.myID or thirdWheel == pkt.sourceID:
-        #     thirdWheel += 1
-
-        # self.distVector[sourceID] = min(
-        #     costs[self.myID] + self.distVector[self.myID], costs[thirdWheel] + self.distVector[thridWheel])
+    def updateDistanceVector(self, mincost):
+        # Dx(y) min{c(x,y) + Dy(y), c(x,z) + Dz(y)}
+        for nodeID in range(self.sim.NUM_NODES):
+            # self.distanceVector[self.myID][nodeID] = min(
+            #     mincost[self.myID][nodeID] + mincost[self.myID][self.myID], mincost[sourceID][nodeID] + mincost[sourceID][self.myID])
+            self.distanceVector[self.myID][nodeID] = min(
+                self.costs[nodeID] + self.costs[self.myID], mincost[nodeID] + mincost[self.myID])
 
     # --------------------------------------------------
+
     def recvUpdate(self, pkt):
         if not self.myID == pkt.sourceid:
-            pass
-            # Node 1: 4 0 50 - src
-            # Node 0: 0 4 1  - dest
-            # self.costs[pkt.sourceid] = pkt.mincosts[self.myID]
-            # # Node 0: 0 60 1 - dest
-            # self.updateDistVector(self, pkt.mincosts, pkt.sourceid)
+            self.costs[pkt.sourceid] = pkt.mincost[self.myID]
+            self.updateDistanceVector(pkt.mincost)
 
     # --------------------------------------------------
-    def sendUpdate(self, pkt):
+    def sendUpdate(self):
+        for nodeID in range(0, self.sim.sim.NUM_NODES):
+            if self.isAdjacent(nodeID):
+                pkt = RouterPacket.RouterPacket(
+                    self.myID, nodeID, self.distanceVector[self.myID])
         self.sim.toLayer2(pkt)
 
     # --------------------------------------------------
@@ -75,13 +87,20 @@ class RouterNode():
         self.myGUI.println("Distancetable:")
         self.myGUI.println("      dst |    0   1   2")
         self.myGUI.println("--------------------------")
-        self.myGUI.print(" nbr    " + str(self.myID) + " |    " + str(self.costs[0]) + "   " +
-                         str(self.costs[1]) + "   " + str(self.costs[2]) + "\n")
+
+        for nodeID in range(0, self.sim.NUM_NODES):
+            self.myGUI.print(" nbr    " + str(nodeID) + " |    ")
+            for i in range(0, self.sim.NUM_NODES):
+                self.myGUI.print(str(self.distanceVector[nodeID][i]) + "   ")
+            self.myGUI.print("\n")
 
     # --------------------------------------------------
 
-    def updateLinkCost(self, dest, newcost):
+    def updateLinkCost(self, destID, newcost):
+        # Update costs for self and distanceVector
+        self.costs[destID] = newcost
+        self.updateDistanceVector(self.costs)
+        # Send update to all adjencent nodes
+        
+
         pass
-        # self.costs[dest] = newcost
-        # self.updateDistVector(self, self.costs, dest)
-        # self.sendUpdate()
