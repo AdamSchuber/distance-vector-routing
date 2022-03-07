@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+from tkinter.tix import INTEGER
 import GuiTextArea
 import RouterPacket
 import F
@@ -35,14 +36,6 @@ class RouterNode():
                 else:
                     self.distanceVector[i][j] = self.sim.INFINITY
 
-        # Print distanceVector values
-        for i in range(0, sim.NUM_NODES):
-            self.myGUI.print("\n")
-            for j in range(0, sim.NUM_NODES):
-                self.myGUI.print(str
-                                 (self.distanceVector[i][j]) + "  ")
-        self.myGUI.print("\n")
-
         # Initilizes the self nodes costs to neighbors
         self.distanceVector[self.myID] = self.costs
 
@@ -51,32 +44,45 @@ class RouterNode():
 
     # --------------------------------------------------
     def isAdjacent(self, nodeID):
-        return nodeID != self.myID and self.costs[nodeID] != 999
+        return nodeID != self.myID      # TODO: add "not equal to" infinity aswell later
 
-    # --------------------------------------------------
+    # ----------------------------------------------------
+    def updateDistanceVector(self, mincost, sourceid = None):
+        if sourceid == None:                   #<----The updateDistanceVector was called from the node itself
+            sourceid = INTEGER                 #<----This line is to make sure sourceid becomes and integer (a hack)                        
+            sourceid = self.myID               #If not sourceid == None, it gets it value from caller of the function
 
-    def updateDistanceVector(self, mincost):
-        # Dx(y) min{c(x,y) + Dy(y), c(x,z) + Dz(y)}
+        self.distanceVector[sourceid] = mincost     #This should probably not affect the calculation below... fingers crossed.. 
+
         for nodeID in range(self.sim.NUM_NODES):
-            # self.distanceVector[self.myID][nodeID] = min(
-            #     mincost[self.myID][nodeID] + mincost[self.myID][self.myID], mincost[sourceID][nodeID] + mincost[sourceID][self.myID])
-            self.distanceVector[self.myID][nodeID] = min(
-                self.costs[nodeID] + self.costs[self.myID], mincost[nodeID] + mincost[self.myID])
-
+                self.distanceVector[self.myID][nodeID] = min(
+                    self.costs[nodeID] + self.costs[self.myID], mincost[nodeID] + mincost[self.myID])
+    
     # --------------------------------------------------
-
     def recvUpdate(self, pkt):
+        print("node: " + str(self.myID) + " recieved packet from " + str(pkt.sourceid))
+        print("-------------------------------------------")
+
+        oldDistanceVector = deepcopy(self.distanceVector[self.myID])             #Later check if any changes were made, in that case -> send packet to neighbours
         if not self.myID == pkt.sourceid:
-            self.costs[pkt.sourceid] = pkt.mincost[self.myID]
-            self.updateDistanceVector(pkt.mincost)
+            self.updateDistanceVector(pkt.mincost, pkt.sourceid)
+        
+        print("\nOld:")
+        print(oldDistanceVector)
+        print("New:")
+        print(self.distanceVector[self.myID])
+        print("\n") 
+        if oldDistanceVector != self.distanceVector[self.myID]:
+            print("CHANGED... sending packet")
+            self.sendUpdate()
 
     # --------------------------------------------------
     def sendUpdate(self):
-        for nodeID in range(0, self.sim.sim.NUM_NODES):
+        for nodeID in range(0, self.sim.NUM_NODES):
             if self.isAdjacent(nodeID):
-                pkt = RouterPacket.RouterPacket(
-                    self.myID, nodeID, self.distanceVector[self.myID])
-        self.sim.toLayer2(pkt)
+                print("at node: " + str(self.myID) + ", sendint to node: " + str(nodeID))
+                pkt = RouterPacket.RouterPacket(self.myID, nodeID, self.distanceVector[self.myID])
+                self.sim.toLayer2(pkt)
 
     # --------------------------------------------------
 
@@ -101,6 +107,6 @@ class RouterNode():
         self.costs[destID] = newcost
         self.updateDistanceVector(self.costs)
         # Send update to all adjencent nodes
-        
+        self.sendUpdate()
 
         pass
