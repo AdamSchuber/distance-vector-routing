@@ -16,3 +16,8 @@ class RouterPacket(object):
 
     def clone(self):
         return RouterPacket(self.sourceid, self.destid, deepcopy(self.mincost))
+
+    # REMOVE BEFORE HANDING IN
+    def print_self(self):
+        print("source: " + str(self.sourceid) + " destination: " + 
+        str(self.destid) + " DV: " + str(self.mincost))

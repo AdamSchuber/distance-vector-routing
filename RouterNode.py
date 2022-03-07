@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+from tkinter.tix import INTEGER
 import GuiTextArea
 import RouterPacket
 import F
@@ -40,14 +41,6 @@ class RouterNode():
                 else:
                     self.distanceVector[i][j] = self.sim.INFINITY
 
-        # Print distanceVector values
-        for i in range(0, sim.NUM_NODES):
-            self.myGUI.print("\n")
-            for j in range(0, sim.NUM_NODES):
-                self.myGUI.print(str
-                                 (self.distanceVector[i][j]) + "  ")
-        self.myGUI.print("\n")
-
         # Initilizes the self nodes costs to neighbors
         self.distanceVector[self.myID] = self.costs
 
@@ -56,33 +49,52 @@ class RouterNode():
 
     # --------------------------------------------------
     def isAdjacent(self, nodeID):
-        return nodeID != self.myID and self.costs[nodeID] != 999
+        return nodeID != self.myID      # TODO: add "not equal to" infinity aswell later
 
-    # --------------------------------------------------
+    # ----------------------------------------------------
+    def updateDistanceVector(self, mincost, sourceid=None):
+        if sourceid == None:  # <----The updateDistanceVector was called from the node itself
+            # <----This line is to make sure sourceid becomes and integer (a hack)
+            sourceid = INTEGER
+            # If not sourceid == None, it gets it value from caller of the function
+            sourceid = self.myID
 
-    def updateDistanceVector(self, minCost, sourceID):
-        # Updates distances for pkt source in vector
-        self.distanceVector[sourceID] = minCost
+        # This should probably not affect the calculation below... fingers crossed..
+        self.distanceVector[sourceid] = mincost
 
-        # Sets self distances as fastest according to bellman-ford
-        for nodeID in range(0, self.sim.NUM_NODES):
+        for nodeID in range(self.sim.NUM_NODES):
             self.distanceVector[self.myID][nodeID] = min(
-                self.costs[nodeID] + self.costs[self.myID], minCost[nodeID] + minCost[self.myID])
+                self.costs[nodeID] + self.costs[self.myID], mincost[nodeID] + mincost[self.myID])
 
     # --------------------------------------------------
-
     def recvUpdate(self, pkt):
+        print("node: " + str(self.myID) +
+              " recieved packet from " + str(pkt.sourceid))
+        print("-------------------------------------------")
+
+        # Later check if any changes were made, in that case -> send packet to neighbours
+        oldDistanceVector = deepcopy(self.distanceVector[self.myID])
         if not self.myID == pkt.sourceid:
-            self.costs[pkt.sourceid] = pkt.mincost[self.myID]
             self.updateDistanceVector(pkt.mincost, pkt.sourceid)
+
+        print("\nOld:")
+        print(oldDistanceVector)
+        print("New:")
+        print(self.distanceVector[self.myID])
+        print("\n")
+        if oldDistanceVector != self.distanceVector[self.myID]:
+            print("CHANGED... sending packet")
+            self.sendUpdate()
 
     # --------------------------------------------------
     def sendUpdate(self):
         for nodeID in range(0, self.sim.NUM_NODES):
             if self.isAdjacent(nodeID):
+                print("at node: " + str(self.myID) +
+                      ", sendint to node: " + str(nodeID))
                 pkt = RouterPacket.RouterPacket(
                     self.myID, nodeID, self.distanceVector[self.myID])
-        self.sim.toLayer2(pkt)
+                self.sim.toLayer2(pkt)
 
     # --------------------------------------------------
 
@@ -100,14 +112,14 @@ class RouterNode():
                 self.myGUI.print(
                     str(self.distanceVector[rowNodeID][colNodeID]) + "   ")
             self.myGUI.print("\n")
-        
+
         self.myGUI.println("--------------------------")
         self.myGUI.print(" cost     |    ")
         for nodeID in range(0, self.sim.NUM_NODES):
             self.myGUI.print(
                 str(self.costs[nodeID]) + "   ")
         self.myGUI.print("\n")
-        
+
         self.myGUI.print(" distance |    ")
         for nodeID in range(0, self.sim.NUM_NODES):
             self.myGUI.print(
