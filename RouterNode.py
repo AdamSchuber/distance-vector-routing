@@ -19,7 +19,7 @@ class RouterNode():
     distanceVector = None
 
     # Access simulator variables with:
-    # self.sim.POISONREVERSE, self.sim.NUM_NODES, etc.export DISPLAY=172.25.32.1:0.0
+    # self.sim.POISONREVERSE, self.sim.NUM_NODES, etc.
 
     # --------------------------------------------------
     def __init__(self, ID, sim, costs):
