@@ -42,7 +42,7 @@ class RouterNode():
                     self.distanceVector[i][j] = self.sim.INFINITY
 
         # Initilizes the self nodes costs to neighbors
-        self.distanceVector[self.myID] = self.costs
+        self.distanceVector[self.myID] = deepcopy(self.costs)
 
         # Sends update packet if nodes are adjecent
         self.sendUpdate()
