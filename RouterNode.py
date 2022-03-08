@@ -49,17 +49,14 @@ class RouterNode():
 
     # --------------------------------------------------
     def isAdjacent(self, nodeID):
-        return nodeID != self.myID      # TODO: add "not equal to" infinity aswell later
+        return nodeID != self.myID and self.costs[nodeID] != self.sim.INFINITY
 
     # ----------------------------------------------------
     def updateDistanceVector(self, mincost, sourceid=None):
-        if sourceid == None:  # <----The updateDistanceVector was called from the node itself
-            # <----This line is to make sure sourceid becomes and integer (a hack)
+        if sourceid == None: 
             sourceid = INTEGER
-            # If not sourceid == None, it gets it value from caller of the function
             sourceid = self.myID
 
-        # This should probably not affect the calculation below... fingers crossed..
         self.distanceVector[sourceid] = mincost
 
         for nodeID in range(self.sim.NUM_NODES):
