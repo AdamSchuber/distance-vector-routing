@@ -61,19 +61,19 @@ class RouterNode():
 
         for nodeID in range(self.sim.NUM_NODES):
             if not nodeID == self.myID:
-                part_1 = self.costs[nodeID] + self.costs[self.myID]
-                part_2 = mincost[nodeID] + \
-                    self.distanceVector[self.myID][sourceid]
-                print("first calculation: " + str(part_1))
-                print("second calculation: " + str(part_2))
+                # part_1 = self.costs[nodeID] + self.costs[self.myID]
+                # part_2 = mincost[nodeID] + \
+                #     self.distanceVector[self.myID][sourceid]
+                # print("first calculation: " + str(part_1))
+                # print("second calculation: " + str(part_2))
                 fastest = min(
-                    self.costs[nodeID] + self.costs[self.myID], mincost[nodeID] + self.distanceVector[self.myID][sourceid])
+                    self.distanceVector[self.myID][nodeID], mincost[nodeID] + self.distanceVector[self.myID][sourceid]) # Changed so it compares my distance to the new received from sourceid
                 self.distanceVector[self.myID][nodeID] = deepcopy(fastest)
 
     # --------------------------------------------------
     def recvUpdate(self, pkt):
         print("node: " + str(self.myID) +
-              " recieved packet from " + str(pkt.sourceid))
+            " recieved packet from " + str(pkt.sourceid))
         print("-------------------------------------------")
 
         # Later check if any changes were made, in that case -> send packet to neighbours
@@ -82,7 +82,12 @@ class RouterNode():
             self.updateDistanceVector(
                 deepcopy(pkt.mincost), deepcopy(pkt.sourceid))
 
-        print("\nOld:")
+        
+        print("\nReceived:")
+        print(pkt.mincost)
+        print("My actual costs:")
+        print(self.costs)
+        print("Old:")
         print(oldDistanceVector)
         print("New:")
         print(self.distanceVector[self.myID])
@@ -96,20 +101,22 @@ class RouterNode():
         for nodeID in range(0, self.sim.NUM_NODES):
             if self.isAdjacent(nodeID):
                 print("at node: " + str(self.myID) +
-                      ", sendint to node: " + str(nodeID))
+                      ", sending to node: " + str(nodeID))
                 pkt = RouterPacket.RouterPacket(
                     self.myID, nodeID, deepcopy(self.distanceVector[self.myID]))
                 self.sim.toLayer2(pkt)
+        print("----------------------------------")
 
     # --------------------------------------------------
-
     def printDistanceTable(self):
         self.myGUI.println("Current table for " + str(self.myID) +
                            "  at time " + str(self.sim.getClocktime()))
         self.myGUI.println("")
         self.myGUI.println("Distancetable:")
-        self.myGUI.println("      dst |    0   1   2")
-        self.myGUI.println("--------------------------")
+        self.myGUI.print("      dst | ")                
+        for nodeID in range(0, self.sim.NUM_NODES):
+            self.myGUI.print("   " + str(nodeID))
+        self.myGUI.println("\n--------------------------")
 
         for rowNodeID in range(0, self.sim.NUM_NODES):
             self.myGUI.print(" nbr    " + str(rowNodeID) + " |    ")
