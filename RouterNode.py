@@ -29,25 +29,28 @@ class RouterNode():
             "  Output window for Router #" + str(ID) + "  ")
         self.costs = deepcopy(costs)
 
-        # Initilizes distanceVector as Matrix with the nodes as columns and rows
-        self.distanceVector = [
-            [0 for _ in range(self.sim.NUM_NODES)] for _ in range(self.sim.NUM_NODES)]
-
-        # Initilizes distanceVector to infinity to all nodes except itself
-        for i in range(self.sim.NUM_NODES):
-            for j in range(self.sim.NUM_NODES):
-                if i == ID and j == ID:
-                    self.distanceVector[i][j] = 0
-                else:
-                    self.distanceVector[i][j] = self.sim.INFINITY
-
-        # Initilizes the self nodes costs to neighbors
-        self.distanceVector[self.myID] = deepcopy(costs)
+        # Initilizes the nodes as a Matrix with infinity distances to each other
+        self.initDistanceVector()
 
         # Sends update packet if nodes are adjecent
         self.sendUpdate()
 
-    # --------------------------------------------------
+    # ---------------------------------------------------
+    def initDistanceVector(self):
+        self.distanceVector = [
+            [0 for _ in range(self.sim.NUM_NODES)] for _ in range(self.sim.NUM_NODES)]
+
+        for i in range(self.sim.NUM_NODES):
+            for j in range(self.sim.NUM_NODES):
+                if i == self.myID and j == self.myID:
+                    self.distanceVector[i][j] = 0
+                else:
+                    self.distanceVector[i][j] = deepcopy(self.sim.INFINITY)
+
+        # Initilizes the self nodes costs to neighbors
+        self.distanceVector[self.myID] = deepcopy(self.costs)
+
+    # ---------------------------------------------------
     def isAdjacent(self, nodeID):
         return nodeID != self.myID and self.costs[nodeID] != self.sim.INFINITY
 
@@ -61,13 +64,21 @@ class RouterNode():
 
         for nodeID in range(self.sim.NUM_NODES):
             if not nodeID == self.myID:
-                part_1 = self.costs[nodeID] + self.costs[self.myID]
+                # part_1 = self.costs[nodeID] + self.costs[self.myID]
+                # part_2 = mincost[nodeID] + \
+                #     self.distanceVector[self.myID][sourceid]
+                # print("first calculation: " + str(part_1))
+                # print("second calculation: " + str(part_2))
+                # fastest = min(
+                #     self.costs[nodeID] + self.costs[self.myID], mincost[nodeID] + self.distanceVector[self.myID][sourceid])
+                # self.distanceVector[self.myID][nodeID] = deepcopy(fastest)
+                part_1 = self.distanceVector[self.myID][nodeID]
                 part_2 = mincost[nodeID] + \
                     self.distanceVector[self.myID][sourceid]
                 print("first calculation: " + str(part_1))
                 print("second calculation: " + str(part_2))
                 fastest = min(
-                    self.costs[nodeID] + self.costs[self.myID], mincost[nodeID] + self.distanceVector[self.myID][sourceid])
+                    self.distanceVector[self.myID][nodeID], mincost[nodeID] + self.distanceVector[self.myID][sourceid])
                 self.distanceVector[self.myID][nodeID] = deepcopy(fastest)
 
     # --------------------------------------------------
@@ -136,8 +147,13 @@ class RouterNode():
 
     def updateLinkCost(self, destID, newcost):
         # Update costs for self and distanceVector
-        self.costs[destID] = deepcopy(newcost)
-        self.updateDistanceVector(self.costs, destID)
+        if self.costs[destID] != self.sim.INFINITY:
+            self.costs[destID] = deepcopy(newcost)
+            if newcost < self.distanceVector[self.myID][destID]:
+                self.distanceVector[self.myID][destID] = deepcopy(newcost)
+            else:
+                self.updateDistanceVector(
+                    deepcopy(self.costs), deepcopy(destID))
 
         # Send update to all adjencent nodes
         self.sendUpdate()
