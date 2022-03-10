@@ -145,21 +145,21 @@ class RouterNode():
 
     def updateLinkCost(self, destID, newcost):
         # Update costs for self and distanceVector
-        self.costs[destID] = deepcopy(newcost)
+        #self.costs[destID] = deepcopy(newcost)
 
         # If newcost is directly linked and smaller it should be then new fastest
-        if newcost < self.distanceVector[self.myID][destID]:
-            self.distanceVector[self.myID][destID] = deepcopy(newcost)
-            self.distanceVector[destID][self.myID] = deepcopy(newcost)
-            self.sendUpdate()
-        else:
-            self.distanceVector[destID][self.myID] = deepcopy(newcost)
-            for nodeID in range(0, self.sim.NUM_NODES):
-                if nodeID == destID: 
-                    self.distanceVector[self.myID][destID] = deepcopy(newcost)
-                else:
-                    self.distanceVector[self.myID][destID] = self.sim.NUM_NODES
-            self.sendUpdate()
+        # if newcost < self.distanceVector[self.myID][destID]:
+        #     self.distanceVector[self.myID][destID] = deepcopy(newcost)
+        #     self.distanceVector[destID][self.myID] = deepcopy(newcost)
+        #     self.sendUpdate()
+        # else:
+        #     self.distanceVector[destID][self.myID] = deepcopy(newcost)
+        #     for nodeID in range(0, self.sim.NUM_NODES):
+        #         if nodeID == destID: 
+        #             self.distanceVector[self.myID][destID] = deepcopy(newcost)
+        #         else:
+        #             self.distanceVector[self.myID][destID] = self.sim.NUM_NODES
+            #self.sendUpdate()
             # oldDistanceVector = deepcopy(self.distanceVector)
             # self.initDistanceVector()
             # for nodeID in range(0, self.sim.NUM_NODES):
