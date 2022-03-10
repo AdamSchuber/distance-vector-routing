@@ -17,6 +17,8 @@ class RouterNode():
     sim = None
     costs = None
     distanceVector = None
+    nodeDestination = None
+    count = None
 
     # Access simulator variables with:
     # self.sim.POISONREVERSE, self.sim.NUM_NODES, etc
@@ -28,7 +30,8 @@ class RouterNode():
         self.myGUI = GuiTextArea.GuiTextArea(
             "  Output window for Router #" + str(ID) + "  ")
         self.costs = deepcopy(costs)
-
+        self.nodeDestination = [0 for _ in range(self.sim.NUM_NODES)]
+        self.nodeDestination[self.myID] = self.myID
         # Initilizes the nodes as a Matrix with infinity distances to each other
         self.initDistanceVector()
 
@@ -55,23 +58,44 @@ class RouterNode():
         if sourceid == None:
             sourceid = deepcopy(INTEGER)
             sourceid = deepcopy(self.myID)
-        
-        if sourceid != self.myID:                               #<---- There is no packet to copy, so lets not do that
+
+        # If packet comes from myself, there is no information to take from mincost
+        if sourceid != self.myID:
             self.distanceVector[sourceid] = deepcopy(mincost)
 
+        # Iterate through all neighbor nodes
         for toNeighbor in range(0, self.sim.NUM_NODES):
-            if self.myID != toNeighbor:                         #<---- Dont want to calculate how long it is to self
-                routes = []
-                for nextHop in range(0, self.sim.NUM_NODES):
-                    if nextHop != self.myID:                    
-                        distanceToNeighbor = self.costs[nextHop] + self.distanceVector[nextHop][toNeighbor]
-                        routes.append(distanceToNeighbor)
-                        print("routes:")
-                        print(routes)
-                        print("minRoutes: ")
-                        print(min(routes))
-                self.distanceVector[self.myID][toNeighbor] = deepcopy(min(routes))
-
+            if self.myID != toNeighbor:
+                # If posioned reverse is active
+                if self.sim.POISONREVERSE:
+                    routes = {}
+                    for nextHop in range(0, self.sim.NUM_NODES):
+                        if nextHop != self.myID:
+                            distanceToNeighbor = self.costs[nextHop] + \
+                                self.distanceVector[nextHop][toNeighbor]
+                            routes[nextHop] = deepcopy(distanceToNeighbor)
+                    
+                    fastest = deepcopy(self.sim.INFINITY)    
+                    for nextHop in routes:
+                        if routes[nextHop] < fastest:
+                            fastest = deepcopy(routes[nextHop])
+                    for nextHop in routes:
+                        if routes[nextHop] == fastest:
+                            self.nodeDestination[toNeighbor] = nextHop
+                    self.distanceVector[self.myID][toNeighbor] = deepcopy(
+                        fastest)
+                # If not poisoned    
+                else:
+                    routes = []
+                    for nextHop in range(0, self.sim.NUM_NODES):
+                        if nextHop != self.myID:
+                            distanceToNeighbor = self.costs[nextHop] + \
+                                self.distanceVector[nextHop][toNeighbor]
+                            routes.append(distanceToNeighbor)
+                    self.distanceVector[self.myID][toNeighbor] = deepcopy(
+                        min(routes))
+        print("node " + str(self.myID) + " routing: ")
+        print(self.nodeDestination)
     # ---------------------------------------------------
     def isAdjacent(self, nodeID):
         return nodeID != self.myID and self.costs[nodeID] != self.sim.INFINITY
@@ -79,16 +103,14 @@ class RouterNode():
     # --------------------------------------------------
     def recvUpdate(self, pkt):
         print("node: " + str(self.myID) +
-            " recieved packet from " + str(pkt.sourceid))
+              " recieved packet from " + str(pkt.sourceid))
         print("-------------------------------------------")
 
-        # Later check if any changes were made, in that case -> send packet to neighbours
         oldDistanceVector = deepcopy(self.distanceVector[self.myID])
         if not self.myID == pkt.sourceid:
             self.updateDistanceVector(
                 deepcopy(pkt.mincost), deepcopy(pkt.sourceid))
 
-        
         print("\nReceived:")
         print(pkt.mincost)
         print("My actual costs:")
@@ -106,11 +128,27 @@ class RouterNode():
     def sendUpdate(self):
         for nodeID in range(0, self.sim.NUM_NODES):
             if self.isAdjacent(nodeID):
-                print("at node: " + str(self.myID) +
-                      ", sending to node: " + str(nodeID))
-                pkt = RouterPacket.RouterPacket(
-                    self.myID, nodeID, deepcopy(self.distanceVector[self.myID]))
-                self.sim.toLayer2(pkt)
+                # If poisoned reverse is active
+                if self.sim.POISONREVERSE:
+                    fakeDistanceVector = deepcopy(self.distanceVector)
+                    # If the destination routes through another node:
+                    # send the distance as infinity to the destionation
+                    for dest in range(0, len(self.nodeDestination)):
+                        if nodeID == self.nodeDestination[dest]:
+                            fakeDistanceVector[self.myID][dest] = self.sim.INFINITY
+                    
+                    pkt = RouterPacket.RouterPacket(
+                        self.myID, nodeID, deepcopy(fakeDistanceVector[self.myID]))
+                    self.count = self.count + 1
+                    self.sim.toLayer2(pkt)
+                else:
+                    print("at node: " + str(self.myID) +
+                          ", sending to node: " + str(nodeID))
+                    pkt = RouterPacket.RouterPacket(
+                        self.myID, nodeID, deepcopy(self.distanceVector[self.myID]))
+                    self.count = self.count + 1
+                    self.sim.toLayer2(pkt)
+
         print("----------------------------------")
 
     # --------------------------------------------------
@@ -150,5 +188,5 @@ class RouterNode():
     def updateLinkCost(self, destID, newcost):
         # Update costs for self and distanceVector
         self.costs[destID] = deepcopy(newcost)
-        self.updateDistanceVector(self.costs, self.myID)        #<----- self.costs doesn't actually do anything in the function, but has to be sent either way
+        self.updateDistanceVector(self.costs, self.myID)
         self.sendUpdate()
