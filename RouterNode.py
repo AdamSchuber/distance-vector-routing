@@ -55,23 +55,22 @@ class RouterNode():
         if sourceid == None:
             sourceid = deepcopy(INTEGER)
             sourceid = deepcopy(self.myID)
-
-        for nodeID in range(0, self.sim.NUM_NODES):
-            if self.distanceVector[sourceid][nodeID] < mincost[nodeID]:
-                self.distanceVector[self.myID][nodeID] = deepcopy(self.costs[nodeID])
         
-        self.distanceVector[sourceid] = deepcopy(mincost)
+        if sourceid != self.myID:                               #<---- There is no packet to copy, so lets not do that
+            self.distanceVector[sourceid] = deepcopy(mincost)
 
-        for nodeID in range(self.sim.NUM_NODES):
-            if not nodeID == self.myID:
-                part_1 = self.distanceVector[self.myID][nodeID]
-                part_2 = mincost[nodeID] + \
-                    self.distanceVector[self.myID][sourceid]
-                print("first calculation: " + str(part_1))
-                print("second calculation: " + str(part_2))
-                fastest = min(
-                    self.distanceVector[self.myID][nodeID], mincost[nodeID] + self.distanceVector[self.myID][sourceid])
-                self.distanceVector[self.myID][nodeID] = deepcopy(fastest)
+        for toNeighbor in range(0, self.sim.NUM_NODES):
+            if self.myID != toNeighbor:                         #<---- Dont want to calculate how long it is to self
+                routes = []
+                for nextHop in range(0, self.sim.NUM_NODES):
+                    if nextHop != self.myID:                    
+                        distanceToNeighbor = self.costs[nextHop] + self.distanceVector[nextHop][toNeighbor]
+                        routes.append(distanceToNeighbor)
+                        print("routes:")
+                        print(routes)
+                        print("minRoutes: ")
+                        print(min(routes))
+                self.distanceVector[self.myID][toNeighbor] = deepcopy(min(routes))
 
     # ---------------------------------------------------
     def isAdjacent(self, nodeID):
@@ -149,40 +148,7 @@ class RouterNode():
     # --------------------------------------------------
 
     def updateLinkCost(self, destID, newcost):
-        pass
         # Update costs for self and distanceVector
-        #self.costs[destID] = deepcopy(newcost)
-
-        # If newcost is directly linked and smaller it should be then new fastest
-        # if newcost < self.distanceVector[self.myID][destID]:
-        #     self.distanceVector[self.myID][destID] = deepcopy(newcost)
-        #     self.distanceVector[destID][self.myID] = deepcopy(newcost)
-        #     self.sendUpdate()
-        # else:
-        #     self.distanceVector[destID][self.myID] = deepcopy(newcost)
-        #     for nodeID in range(0, self.sim.NUM_NODES):
-        #         if nodeID == destID: 
-        #             self.distanceVector[self.myID][destID] = deepcopy(newcost)
-        #         else:
-        #             self.distanceVector[self.myID][destID] = self.sim.NUM_NODES
-            #self.sendUpdate()
-            # oldDistanceVector = deepcopy(self.distanceVector)
-            # self.initDistanceVector()
-            # for nodeID in range(0, self.sim.NUM_NODES):
-            #     if nodeID != self.myID:
-            #         pkt = RouterPacket.RouterPacket(
-            #             nodeID, self.myID, deepcopy(oldDistanceVector[nodeID]))
-            #         self.recvUpdate(pkt)
-            # for nodeID in range(0, self.sim.NUM_NODES):
-            #     if nodeID != self.myID:
-            #         prevFast = self.sim.INFINITY
-            #         fast = 0
-            #         compare1 = self.costs[nodeID]
-            #         for neighbor in range(0, self.sim.NUM_NODES):
-            #             if neighbor != nodeID:
-            #                 compare2 = self.distanceVector[neighbor][nodeID] + self.distanceVector[self.myID][neighbor]
-            #                 fast = min(compare1, compare2)
-            #                 if fast < prevFast:
-            #                     prevFast = deepcopy(fast)
-                        
-            #         self.distanceVector[self.myID][nodeID] = deepcopy(prevFast)
+        self.costs[destID] = deepcopy(newcost)
+        self.updateDistanceVector(self.costs, self.myID)        #<----- self.costs doesn't actually do anything in the function, but has to be sent either way
+        self.sendUpdate()
