@@ -168,7 +168,6 @@ class RouterNode():
         self.myGUI.print("\n")
 
     # --------------------------------------------------
-
     def updateLinkCost(self, destID, newcost):
         # Update costs for self and distanceVector
         self.costs[destID] = deepcopy(newcost)
