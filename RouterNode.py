@@ -128,18 +128,12 @@ class RouterNode():
                     
                     pkt = RouterPacket.RouterPacket(
                         self.myID, nodeID, deepcopy(fakeDistanceVector[self.myID]))
-                    self.count = self.count + 1
                     self.sim.toLayer2(pkt)
                 # If not poisoned 
                 else:
-                    print("at node: " + str(self.myID) +
-                          ", sending to node: " + str(nodeID))
                     pkt = RouterPacket.RouterPacket(
                         self.myID, nodeID, deepcopy(self.distanceVector[self.myID]))
-                    self.count = self.count + 1
                     self.sim.toLayer2(pkt)
-
-        print("----------------------------------")
 
     # --------------------------------------------------
     def printDistanceTable(self):
